@@ -1,0 +1,17 @@
+{
+  "schema_version": "official-crosswalk-catalog-v0.1",
+  "sources": [
+    {
+      "source_id": "UNSD_ISIC_REV4_TO_REV5_2025_01_17",
+      "provider": "United Nations Statistics Division",
+      "adapter": "unsd-isic-rev4-rev5-xlsx",
+      "url": "https://unstats.un.org/unsd/classifications/Econ/tables/ISIC/ISIC_Rev4_to_ISIC_Rev5_Correspondence_Table-17Jan2025.xlsx",
+      "from_system": "ISIC",
+      "from_version": "4",
+      "to_system": "ISIC",
+      "to_version": "5",
+      "expected_from_code_count": 419,
+      "expected_to_code_count": 463
+    }
+  ]
+}
