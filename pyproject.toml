@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zse-value-scanner"
+version = "0.4.10"
+description = "Private research tool for Zagreb Stock Exchange / EHO financial reports"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{name = "Private research project"}]
+dependencies = [
+  "requests>=2.32,<3",
+  "openpyxl>=3.1,<4",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+warehouse = ["duckdb>=1.4,<2", "pyarrow>=18,<24"]
+
+[project.scripts]
+zse-tool = "zse_tool.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.setuptools.package-data]
+zse_tool = ["data/*.json", "data/company_profiles/*.json"]

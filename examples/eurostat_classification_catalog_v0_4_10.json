@@ -1,0 +1,28 @@
+{
+  "schema_version": "official-classification-catalog-v0.2",
+  "transport": "eurostat-sdmx-codelist",
+  "sdmx_base": "https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1",
+  "languages": ["en", "fr", "de"],
+  "schemes": [
+    {
+      "key": "NACE_REV_2_1",
+      "system": "NACE",
+      "version": "2.1",
+      "title_contains": "classification of economic activities",
+      "preferred_ids": ["NACE_R2_1"],
+      "expected_item_count": 1047,
+      "expected_levels": 4,
+      "expected_level_counts": {"1": 22, "2": 87, "3": 287, "4": 651}
+    },
+    {
+      "key": "CPA_2_2",
+      "system": "CPA",
+      "version": "2.2",
+      "title_contains": "classification of products by activity",
+      "preferred_ids": ["CPA22", "CPA_2_2", "CPA2_2"],
+      "expected_item_count": 5828,
+      "expected_levels": 6,
+      "expected_level_counts": {"1": 22, "2": 87, "3": 284, "4": 644, "5": 1432, "6": 3359}
+    }
+  ]
+}

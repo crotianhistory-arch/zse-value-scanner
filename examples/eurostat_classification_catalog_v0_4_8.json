@@ -1,0 +1,22 @@
+{
+  "schema_version": "official-classification-catalog-v0.1",
+  "endpoint": "https://publications.europa.eu/webapi/rdf/sparql",
+  "schemes": [
+    {
+      "key": "NACE_REV_2_1",
+      "system": "NACE",
+      "version": "2.1",
+      "label_contains": "Statistical Classification of Economic Activities in the European Community",
+      "expected_item_count": 1047,
+      "expected_levels": 4
+    },
+    {
+      "key": "CPA_2_2",
+      "system": "CPA",
+      "version": "2.2",
+      "label_contains": "Statistical classification of products by activity",
+      "expected_item_count": 5828,
+      "expected_levels": 6
+    }
+  ]
+}

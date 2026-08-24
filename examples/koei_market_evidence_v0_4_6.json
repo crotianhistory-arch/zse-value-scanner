@@ -1,0 +1,286 @@
+{
+  "schema_version": "commercial-market-evidence-v0.1",
+  "company": {
+    "name": "KONCAR Group",
+    "ticker": "KOEI",
+    "country": "HR",
+    "note": "Pilot commercial-search evidence. Geographic revenue is group-level unless a project record states a narrower scope."
+  },
+  "evidence": [
+    {
+      "evidence_id": "KOEI-2025-PTD-SCOPE",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "business_scope",
+      "period": "2025-FY",
+      "scope": {"level": "group_division", "name": "Power Transmission and Distribution"},
+      "metrics": {"revenue_eur_m": 984.643, "share_total_revenue_pct": 74.6},
+      "activity_terms": ["power transmission", "power distribution"],
+      "source": {
+        "url": "https://www.koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2026-02/Nerevidirani%20rezultati%20poslovanja%202025%20GRUPA%20ENG.pdf",
+        "title": "KONCAR Group 2025 unaudited Management Board Report",
+        "published": "2026-02-26"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2025-DE-REV",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "geography_revenue",
+      "period": "2025-FY",
+      "scope": {"level": "group"},
+      "market": {"iso2": "DE", "name": "Germany"},
+      "metrics": {"revenue_eur_m": 188.3, "share_total_exports_pct": 21.1},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2026-02/Nerevidirani%20rezultati%20poslovanja%202025%20GRUPA%20ENG.pdf",
+        "title": "KONCAR Group 2025 unaudited Management Board Report",
+        "published": "2026-02-26"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2025-SE-REV",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "geography_revenue",
+      "period": "2025-FY",
+      "scope": {"level": "group"},
+      "market": {"iso2": "SE", "name": "Sweden"},
+      "metrics": {"revenue_eur_m": 119.8, "share_total_exports_pct": 13.4},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2026-02/Nerevidirani%20rezultati%20poslovanja%202025%20GRUPA%20ENG.pdf",
+        "title": "KONCAR Group 2025 unaudited Management Board Report",
+        "published": "2026-02-26"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2025-NO-REV",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "geography_revenue",
+      "period": "2025-FY",
+      "scope": {"level": "group"},
+      "market": {"iso2": "NO", "name": "Norway"},
+      "metrics": {"revenue_eur_m": 64.4, "share_total_exports_pct": 7.2},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2026-02/Nerevidirani%20rezultati%20poslovanja%202025%20GRUPA%20ENG.pdf",
+        "title": "KONCAR Group 2025 unaudited Management Board Report",
+        "published": "2026-02-26"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2025-AT-REV",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "geography_revenue",
+      "period": "2025-FY",
+      "scope": {"level": "group"},
+      "market": {"iso2": "AT", "name": "Austria"},
+      "metrics": {"revenue_eur_m": 51.9, "share_total_exports_pct": 5.8},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2026-02/Nerevidirani%20rezultati%20poslovanja%202025%20GRUPA%20ENG.pdf",
+        "title": "KONCAR Group 2025 unaudited Management Board Report",
+        "published": "2026-02-26"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2024-DE-REV",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "geography_revenue",
+      "period": "2024-FY",
+      "scope": {"level": "group"},
+      "market": {"iso2": "DE", "name": "Germany"},
+      "metrics": {"revenue_eur_m": 130.6, "share_total_exports_pct": 17.6},
+      "activity_terms": [],
+      "source": {
+        "url": "https://koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2025-04/KON%C4%8CAR%20Group%20-%20consolidated%20annual%20report%20for%202024.pdf",
+        "title": "KONCAR Group consolidated annual report for 2024",
+        "published": "2025-04-16"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2024-SE-REV",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "geography_revenue",
+      "period": "2024-FY",
+      "scope": {"level": "group"},
+      "market": {"iso2": "SE", "name": "Sweden"},
+      "metrics": {"revenue_eur_m": 109.7, "share_total_exports_pct": 14.8},
+      "activity_terms": [],
+      "source": {
+        "url": "https://koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2025-04/KON%C4%8CAR%20Group%20-%20consolidated%20annual%20report%20for%202024.pdf",
+        "title": "KONCAR Group consolidated annual report for 2024",
+        "published": "2025-04-16"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2026H1-DE-REV",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "geography_revenue",
+      "period": "2026-H1",
+      "scope": {"level": "group"},
+      "market": {"iso2": "DE", "name": "Germany"},
+      "metrics": {"revenue_eur_m": 124.4},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/en/news/koncar-secures-more-eur-1-billion-new-orders-first-half-year",
+        "title": "KONCAR secures more than EUR 1 billion in new orders in the first half of the year",
+        "published": "2026-07-30"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2026H1-SE-REV",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "geography_revenue",
+      "period": "2026-H1",
+      "scope": {"level": "group"},
+      "market": {"iso2": "SE", "name": "Sweden"},
+      "metrics": {"revenue_eur_m": 60.6},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/en/news/koncar-secures-more-eur-1-billion-new-orders-first-half-year",
+        "title": "KONCAR secures more than EUR 1 billion in new orders in the first half of the year",
+        "published": "2026-07-30"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2026H1-NL-REV",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "geography_revenue",
+      "period": "2026-H1",
+      "scope": {"level": "group"},
+      "market": {"iso2": "NL", "name": "Netherlands"},
+      "metrics": {"revenue_eur_m": 42.7},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/en/news/koncar-secures-more-eur-1-billion-new-orders-first-half-year",
+        "title": "KONCAR secures more than EUR 1 billion in new orders in the first half of the year",
+        "published": "2026-07-30"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2024-DE-ORDERS",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "order_intake",
+      "period": "2024-FY",
+      "scope": {"level": "group"},
+      "market": {"iso2": "DE", "name": "Germany"},
+      "metrics": {"order_intake_eur_m": 306.6},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2025-02/Nerevidirani%20rezultati%20poslovanja%202024%20GRUPA%20KONCAR%20ENG.pdf",
+        "title": "KONCAR Group 2024 unaudited Management Board Report",
+        "published": "2025-02-26"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2024-SE-ORDERS",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "order_intake",
+      "period": "2024-FY",
+      "scope": {"level": "group"},
+      "market": {"iso2": "SE", "name": "Sweden"},
+      "metrics": {"order_intake_eur_m": 177.1},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2025-02/Nerevidirani%20rezultati%20poslovanja%202024%20GRUPA%20KONCAR%20ENG.pdf",
+        "title": "KONCAR Group 2024 unaudited Management Board Report",
+        "published": "2025-02-26"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2024-RO-ORDERS",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "order_intake",
+      "period": "2024-FY",
+      "scope": {"level": "group"},
+      "market": {"iso2": "RO", "name": "Romania"},
+      "metrics": {"order_intake_eur_m": 111.3},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2025-02/Nerevidirani%20rezultati%20poslovanja%202024%20GRUPA%20KONCAR%20ENG.pdf",
+        "title": "KONCAR Group 2024 unaudited Management Board Report",
+        "published": "2025-02-26"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2024-NL-ORDERS",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "order_intake",
+      "period": "2024-FY",
+      "scope": {"level": "group"},
+      "market": {"iso2": "NL", "name": "Netherlands"},
+      "metrics": {"order_intake_eur_m": 106.2},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2025-02/Nerevidirani%20rezultati%20poslovanja%202024%20GRUPA%20KONCAR%20ENG.pdf",
+        "title": "KONCAR Group 2024 unaudited Management Board Report",
+        "published": "2025-02-26"
+      }
+    },
+    {
+      "evidence_id": "KOEI-2024-NO-ORDERS",
+      "evidence_class": "R1_REPORTED_NUMERIC",
+      "kind": "order_intake",
+      "period": "2024-FY",
+      "scope": {"level": "group"},
+      "market": {"iso2": "NO", "name": "Norway"},
+      "metrics": {"order_intake_eur_m": 106.1},
+      "activity_terms": [],
+      "source": {
+        "url": "https://www.koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2025-02/Nerevidirani%20rezultati%20poslovanja%202024%20GRUPA%20KONCAR%20ENG.pdf",
+        "title": "KONCAR Group 2024 unaudited Management Board Report",
+        "published": "2025-02-26"
+      }
+    },
+    {
+      "evidence_id": "KOEI-SE-MUNKSUND-2025",
+      "evidence_class": "R2_REPORTED_TEXT",
+      "kind": "contract_project",
+      "period": "2025-03",
+      "scope": {"level": "group_project", "name": "PT 46 Munksund transformer substation"},
+      "market": {"iso2": "SE", "name": "Sweden"},
+      "metrics": {"contract_value_eur_m": 18.4},
+      "activity_terms": ["turnkey transformer substation", "130 kV substation", "transformers"],
+      "customer": "Vattenfall Eldistribution AB",
+      "project": "PT 46 Munksund transformer substation",
+      "source": {
+        "url": "https://www.koncar.hr/en/news/contract-for-new-transformer-substation-sweden",
+        "title": "A contract for a new transformer substation in Sweden",
+        "published": "2025-03-11"
+      }
+    },
+    {
+      "evidence_id": "KOEI-DE-AGRIVOLTAIC-2026",
+      "evidence_class": "R2_REPORTED_TEXT",
+      "kind": "contract_project",
+      "period": "2026-06",
+      "scope": {"level": "subsidiary_project", "name": "KONCAR Distribution and Special Transformers"},
+      "market": {"iso2": "DE", "name": "Germany"},
+      "metrics": {},
+      "activity_terms": ["medium power transformers", "125 MVA transformers", "110 kV grid connection"],
+      "customer": "German agrivoltaic developer/investor (unnamed in source)",
+      "project": "Klimapark Steinhoefel agrivoltaic power plant",
+      "source": {
+        "url": "https://www.koncar.hr/en/news/transformers-for-europes-largest-agrivoltaic-power-plant",
+        "title": "Transformers for Europe's largest agrivoltaic power plant",
+        "published": "2026-06-17"
+      }
+    },
+    {
+      "evidence_id": "KOEI-NO-VIK-SOGNDAL-2024",
+      "evidence_class": "R2_REPORTED_TEXT",
+      "kind": "contract_project",
+      "period": "2024-FY",
+      "scope": {"level": "subsidiary_project", "name": "Dalekovod"},
+      "market": {"iso2": "NO", "name": "Norway"},
+      "metrics": {},
+      "activity_terms": ["420 kV transmission line", "high-voltage transmission infrastructure"],
+      "customer": null,
+      "project": "Vik-Sogndal 420 kV transmission line",
+      "source": {
+        "url": "https://koncar.hr/sites/default/files/dokumenti/financijski-izvjestaji/2025-04/KON%C4%8CAR%20Group%20-%20consolidated%20annual%20report%20for%202024.pdf",
+        "title": "KONCAR Group consolidated annual report for 2024",
+        "published": "2025-04-16"
+      }
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+[console_scripts]
+zse-tool = zse_tool.cli:main
