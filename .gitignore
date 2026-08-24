@@ -48,3 +48,9 @@ ollama-models/
 ht_2026_q1.json
 koei_2022_q4.json
 koei_2026_q1.json
+
+# Generated Python packaging metadata
+*.egg-info/
+
+# Keep the non-secret environment template
+!.env.example
