@@ -17,7 +17,7 @@ from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 
 SCHEMA_VERSION = "official-classification-backbone-v0.1"
-ALLOWED_ENDPOINT_HOSTS = {"publications.europa.eu", "ec.europa.eu"}
+ALLOWED_ENDPOINT_HOSTS = {"publications.europa.eu", "ec.europa.eu", "showvoc.op.europa.eu"}
 MAX_RESPONSE_BYTES = 32 * 1024 * 1024
 DEFAULT_PAGE_SIZE = 5000
 DEFAULT_MAX_PAGES = 200
@@ -51,6 +51,18 @@ class SdmxSchemeSpec:
     expected_item_count: int
     expected_levels: int
     expected_level_counts: dict[int, int]
+
+
+@dataclass(frozen=True)
+class ShowVocSchemeSpec:
+    key: str
+    system: str
+    version: str
+    project: str
+    expected_item_count: int
+    expected_levels: int
+    expected_level_counts: dict[int, int]
+    required_languages: tuple[str, ...]
 
 
 @dataclass(frozen=True)
@@ -1107,9 +1119,506 @@ def _sync_sdmx(catalog: Path, output_db: Path, raw_dir: Path, *, replace: bool =
     }
 
 
+def _catalog_v3_from_path(path: Path) -> tuple[str, list[ShowVocSchemeSpec]]:
+    obj = json.loads(path.read_text(encoding="utf-8"))
+    if obj.get("schema_version") != "official-classification-catalog-v0.3":
+        raise ClassificationError("unsupported ShowVoc classification catalog schema")
+    if obj.get("transport") != "eurostat-showvoc-sparql":
+        raise ClassificationError("unsupported ShowVoc classification catalog transport")
+
+    endpoint = str(obj.get("showvoc_endpoint") or "")
+    _validate_https_endpoint(endpoint)
+
+    languages = tuple(str(x).lower() for x in (obj.get("languages") or []))
+    if not languages or len(set(languages)) != len(languages):
+        raise ClassificationError("ShowVoc catalog languages must be a non-empty unique list")
+    if any(not re.fullmatch(r"[a-z]{2}", x) for x in languages):
+        raise ClassificationError("ShowVoc catalog language codes must be two lowercase letters")
+
+    specs: list[ShowVocSchemeSpec] = []
+    for item in obj.get("schemes") or []:
+        level_counts = {int(k): int(v) for k, v in (item.get("expected_level_counts") or {}).items()}
+        specs.append(
+            ShowVocSchemeSpec(
+                key=str(item["key"]),
+                system=str(item["system"]),
+                version=str(item["version"]),
+                project=str(item["project"]),
+                expected_item_count=int(item["expected_item_count"]),
+                expected_levels=int(item["expected_levels"]),
+                expected_level_counts=level_counts,
+                required_languages=languages,
+            )
+        )
+
+    if not specs:
+        raise ClassificationError("ShowVoc classification catalog has no schemes")
+    if len({s.key for s in specs}) != len(specs):
+        raise ClassificationError("duplicate scheme key in ShowVoc catalog")
+
+    for spec in specs:
+        if not spec.project:
+            raise ClassificationError(f"{spec.key} ShowVoc project is empty")
+        if set(spec.expected_level_counts) != set(range(1, spec.expected_levels + 1)):
+            raise ClassificationError(f"{spec.key} expected_level_counts must cover every level")
+        if sum(spec.expected_level_counts.values()) != spec.expected_item_count:
+            raise ClassificationError(f"{spec.key} expected level counts do not sum to expected_item_count")
+
+    return endpoint, specs
+
+
+def _parse_showvoc_json(data: bytes) -> list[dict[str, Any]]:
+    try:
+        obj = json.loads(data)
+    except json.JSONDecodeError as exc:
+        raise ClassificationError(f"invalid ShowVoc JSON: {exc}") from exc
+
+    st = obj.get("stresponse")
+    if isinstance(st, dict) and st.get("exception"):
+        raise ClassificationError(
+            "ShowVoc service exception: "
+            + str(st.get("msg") or st.get("exception"))
+        )
+
+    result = obj.get("result")
+    if isinstance(result, str):
+        try:
+            result = json.loads(result)
+        except json.JSONDecodeError:
+            result = None
+
+    if isinstance(result, dict):
+        sparql = result.get("sparql")
+        if isinstance(sparql, dict):
+            rows = sparql.get("results", {}).get("bindings")
+            if isinstance(rows, list):
+                return [row for row in rows if isinstance(row, dict)]
+
+        rows = result.get("results", {}).get("bindings")
+        if isinstance(rows, list):
+            return [row for row in rows if isinstance(row, dict)]
+
+    rows = obj.get("results", {}).get("bindings")
+    if isinstance(rows, list):
+        return [row for row in rows if isinstance(row, dict)]
+
+    if isinstance(st, dict):
+        result = st.get("result")
+        if isinstance(result, str):
+            try:
+                result = json.loads(result)
+            except json.JSONDecodeError:
+                result = None
+        if isinstance(result, dict):
+            sparql = result.get("sparql")
+            if isinstance(sparql, dict):
+                rows = sparql.get("results", {}).get("bindings")
+                if isinstance(rows, list):
+                    return [row for row in rows if isinstance(row, dict)]
+            rows = result.get("results", {}).get("bindings")
+            if isinstance(rows, list):
+                return [row for row in rows if isinstance(row, dict)]
+
+    raise ClassificationError("ShowVoc JSON missing tuple result bindings")
+
+
+def _showvoc_request(endpoint: str, project: str, query: str, *, timeout: float = 90.0) -> bytes:
+    _validate_https_endpoint(endpoint)
+    if not project:
+        raise ClassificationError("ShowVoc project is required")
+
+    url = f"{endpoint}?{urlencode({'ctx_project': project})}"
+    payload = urlencode(
+        {
+            "query": query,
+            "includeInferred": "false",
+            "ql": "SPARQL",
+            "maxExecTime": "60",
+        }
+    ).encode("utf-8")
+
+    request = Request(
+        url,
+        data=payload,
+        method="POST",
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+            "User-Agent": "zse-value-scanner/0.4.11 classification-backbone",
+        },
+    )
+
+    last_error: Exception | None = None
+    for attempt in range(3):
+        try:
+            with urlopen(request, timeout=timeout) as response:  # nosec B310 - endpoint is validated above
+                status_code = getattr(response, "status", 200)
+                if status_code != 200:
+                    raise ClassificationError(f"ShowVoc endpoint returned HTTP {status_code}")
+                data = _read_bounded(response)
+                _parse_showvoc_json(data)
+                return data
+        except Exception as exc:
+            last_error = exc
+            if attempt < 2:
+                time.sleep(0.5 * (attempt + 1))
+
+    raise ClassificationError(f"ShowVoc request failed after retries: {last_error}")
+
+
+def _showvoc_paged_query(
+    endpoint: str,
+    project: str,
+    base_query: str,
+    *,
+    raw_dir: Path,
+    scheme_key: str,
+    query_kind: str,
+    page_size: int = DEFAULT_PAGE_SIZE,
+    max_pages: int = DEFAULT_MAX_PAGES,
+) -> list[PageResult]:
+    if page_size < 1 or page_size > 10000:
+        raise ClassificationError("page_size must be between 1 and 10000")
+    if max_pages < 1 or max_pages > 1000:
+        raise ClassificationError("max_pages must be between 1 and 1000")
+
+    results: list[PageResult] = []
+    for page in range(max_pages):
+        query = f"{base_query}\nLIMIT {page_size}\nOFFSET {page * page_size}"
+        data = _showvoc_request(endpoint, project, query)
+        raw_path, digest = _write_raw(raw_dir, scheme_key, query_kind, page, data)
+        rows = _parse_showvoc_json(data)
+        results.append(PageResult(rows=rows, raw_path=raw_path, sha256=digest))
+        if len(rows) < page_size:
+            return results
+
+    raise ClassificationError(f"{scheme_key}/{query_kind} exceeded max_pages={max_pages}")
+
+
+def _showvoc_items_query() -> str:
+    return f"""
+PREFIX skos: <{SKOS}>
+SELECT DISTINCT ?concept ?code ?parent WHERE {{
+  ?concept a skos:Concept ;
+           skos:notation ?code .
+  OPTIONAL {{ ?concept skos:broader ?parent . }}
+}}
+ORDER BY ?code ?concept ?parent
+""".strip()
+
+
+def _showvoc_labels_query(languages: tuple[str, ...]) -> str:
+    filters = " || ".join(
+        f'LANGMATCHES(LANG(?label), "{language}")'
+        for language in languages
+    )
+    return f"""
+PREFIX skos: <{SKOS}>
+SELECT DISTINCT ?concept ?code ?label WHERE {{
+  ?concept a skos:Concept ;
+           skos:notation ?code ;
+           skos:prefLabel ?label .
+  FILTER({filters})
+}}
+ORDER BY ?code ?label
+""".strip()
+
+
+def _normalize_showvoc_scheme(
+    spec: ShowVocSchemeSpec,
+    endpoint: str,
+    item_pages: list[PageResult],
+    label_pages: list[PageResult],
+) -> dict[str, Any]:
+    items_by_uri: dict[str, dict[str, Any]] = {}
+    code_to_uri: dict[str, str] = {}
+
+    for row in _rows_from_pages(item_pages):
+        uri = _binding_value(row, "concept")
+        code = _binding_value(row, "code")
+        parent_uri = _binding_value(row, "parent")
+        if not uri or not code:
+            continue
+
+        code = code.strip()
+        level = _level_from_code(code)
+        if level > spec.expected_levels:
+            raise ClassificationError(f"{spec.key} code exceeds expected levels: {code}")
+
+        current = items_by_uri.setdefault(
+            uri,
+            {"uri": uri, "code": code, "parent_uris": set()},
+        )
+        if current["code"] != code:
+            raise ClassificationError(f"concept has conflicting codes: {uri}")
+        if parent_uri:
+            current["parent_uris"].add(parent_uri)
+
+        existing_uri = code_to_uri.get(code)
+        if existing_uri is not None and existing_uri != uri:
+            raise ClassificationError(f"duplicate code {code!r} in {spec.key}")
+        code_to_uri[code] = uri
+
+    if len(items_by_uri) != spec.expected_item_count:
+        raise ClassificationError(
+            f"{spec.key} expected {spec.expected_item_count} classification items, "
+            f"observed {len(items_by_uri)}"
+        )
+
+    level_counts: dict[int, int] = {
+        level: 0 for level in range(1, spec.expected_levels + 1)
+    }
+    for item in items_by_uri.values():
+        level_counts[_level_from_code(item["code"])] += 1
+
+    if level_counts != spec.expected_level_counts:
+        raise ClassificationError(
+            f"{spec.key} level-count mismatch: "
+            f"expected={spec.expected_level_counts!r} observed={level_counts!r}"
+        )
+
+    items: list[dict[str, Any]] = []
+    for uri, item in items_by_uri.items():
+        code = item["code"]
+        level = _level_from_code(code)
+        parent_uris = item["parent_uris"]
+
+        if len(parent_uris) > 1:
+            raise ClassificationError(
+                f"{spec.key} code {code} has multiple direct parents: "
+                f"{sorted(parent_uris)!r}"
+            )
+
+        parent_uri = next(iter(parent_uris), None)
+        parent_code = None
+
+        if level == 1:
+            if parent_uri is not None:
+                raise ClassificationError(f"{spec.key} root code {code} unexpectedly has a parent")
+        else:
+            if parent_uri is None:
+                raise ClassificationError(f"{spec.key} non-root code {code} has no explicit parent")
+            parent = items_by_uri.get(parent_uri)
+            if parent is None:
+                raise ClassificationError(
+                    f"{spec.key} parent is outside project for {code}: {parent_uri}"
+                )
+            parent_code = parent["code"]
+            parent_level = _level_from_code(parent_code)
+            if parent_level != level - 1:
+                raise ClassificationError(
+                    f"{spec.key} parent-level mismatch for {code}: "
+                    f"parent={parent_code} level={parent_level}"
+                )
+
+        items.append(
+            {
+                "code": code,
+                "uri": uri,
+                "parent_code": parent_code,
+                "level": level,
+            }
+        )
+
+    labels_by_code_language: dict[tuple[str, str], str] = {}
+    required_languages = set(spec.required_languages)
+
+    for row in _rows_from_pages(label_pages):
+        uri = _binding_value(row, "concept")
+        code = _binding_value(row, "code")
+        label = _binding_value(row, "label")
+        if not uri or not code or label is None:
+            continue
+        if uri not in items_by_uri:
+            raise ClassificationError(f"label references unknown concept: {uri}")
+
+        code = code.strip()
+        if items_by_uri[uri]["code"] != code:
+            raise ClassificationError(f"label code mismatch for concept: {uri}")
+
+        language = _binding_lang(row, "label").lower()
+        if language not in required_languages:
+            continue
+
+        key = (code, language)
+        existing = labels_by_code_language.get(key)
+        if existing is not None and existing != label:
+            raise ClassificationError(
+                f"{spec.key} has multiple prefLabels for {code}/{language}"
+            )
+        labels_by_code_language[key] = label
+
+    missing_labels: list[tuple[str, str]] = []
+    for code in sorted(code_to_uri):
+        for language in spec.required_languages:
+            if (code, language) not in labels_by_code_language:
+                missing_labels.append((code, language))
+
+    if missing_labels:
+        raise ClassificationError(
+            f"{spec.key} missing required prefLabels: "
+            f"count={len(missing_labels)} first={missing_labels[:5]!r}"
+        )
+
+    expected_label_count = spec.expected_item_count * len(spec.required_languages)
+    if len(labels_by_code_language) != expected_label_count:
+        raise ClassificationError(
+            f"{spec.key} expected {expected_label_count} required-language prefLabels, "
+            f"observed {len(labels_by_code_language)}"
+        )
+
+    items.sort(key=lambda x: (x["level"], x["code"]))
+    labels = [
+        {
+            "code": code,
+            "language": language,
+            "kind": "skos:prefLabel",
+            "label": label,
+        }
+        for (code, language), label in labels_by_code_language.items()
+    ]
+    labels.sort(key=lambda x: (x["code"], x["language"], x["label"]))
+
+    scheme_uri = f"{endpoint}?{urlencode({'ctx_project': spec.project})}"
+    notes: list[dict[str, str]] = []
+    digest_payload = {
+        "source_project": spec.project,
+        "items": items,
+        "labels": labels,
+        "notes": notes,
+    }
+
+    return {
+        "scheme": {
+            "key": spec.key,
+            "system": spec.system,
+            "version": spec.version,
+            "scheme_uri": scheme_uri,
+            "item_count": len(items),
+            "label_count": len(labels),
+            "note_count": 0,
+            "languages": sorted(spec.required_languages),
+            "normalized_sha256": _sha256_bytes(_canonical_json_bytes(digest_payload)),
+            "source_project": spec.project,
+            "expected_level_counts": spec.expected_level_counts,
+        },
+        "items": items,
+        "labels": labels,
+        "notes": notes,
+    }
+
+
+def _sync_showvoc(
+    catalog: Path,
+    output_db: Path,
+    raw_dir: Path,
+    *,
+    replace: bool = False,
+) -> dict[str, Any]:
+    endpoint, specs = _catalog_v3_from_path(catalog)
+    raw_dir = raw_dir.expanduser().resolve()
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    retrieved_at = _utc_now()
+
+    normalized_schemes: list[dict[str, Any]] = []
+    source_manifest: dict[str, Any] = {
+        "schema_version": "official-classification-raw-manifest-v0.3",
+        "retrieved_at": retrieved_at,
+        "transport": "eurostat-showvoc-sparql",
+        "endpoint": endpoint,
+        "schemes": [],
+    }
+
+    for spec in specs:
+        item_pages = _showvoc_paged_query(
+            endpoint,
+            spec.project,
+            _showvoc_items_query(),
+            raw_dir=raw_dir,
+            scheme_key=spec.key,
+            query_kind="items",
+        )
+        label_pages = _showvoc_paged_query(
+            endpoint,
+            spec.project,
+            _showvoc_labels_query(spec.required_languages),
+            raw_dir=raw_dir,
+            scheme_key=spec.key,
+            query_kind="pref-labels",
+        )
+
+        normalized = _normalize_showvoc_scheme(
+            spec,
+            endpoint,
+            item_pages,
+            label_pages,
+        )
+        normalized_schemes.append(normalized)
+
+        source_manifest["schemes"].append(
+            {
+                "key": spec.key,
+                "system": spec.system,
+                "version": spec.version,
+                "project": spec.project,
+                "expected_item_count": spec.expected_item_count,
+                "expected_level_counts": spec.expected_level_counts,
+                "required_languages": list(spec.required_languages),
+                "item_pages": [
+                    {
+                        "raw_path": page.raw_path,
+                        "sha256": page.sha256,
+                        "row_count": len(page.rows),
+                    }
+                    for page in item_pages
+                ],
+                "label_pages": [
+                    {
+                        "raw_path": page.raw_path,
+                        "sha256": page.sha256,
+                        "row_count": len(page.rows),
+                    }
+                    for page in label_pages
+                ],
+                "normalized": normalized["scheme"],
+                "notes_status": "not_in_v0_4_11_core_snapshot",
+            }
+        )
+
+    manifest_bytes = _canonical_json_bytes(source_manifest)
+    manifest_digest = _sha256_bytes(manifest_bytes)
+    manifest_path = raw_dir / (
+        f"manifest-{retrieved_at.replace(':', '').replace('-', '')}-"
+        f"{manifest_digest}.json"
+    )
+    if not manifest_path.exists():
+        tmp = manifest_path.with_suffix(manifest_path.suffix + f".tmp-{os.getpid()}")
+        tmp.write_bytes(manifest_bytes)
+        os.replace(tmp, manifest_path)
+
+    db_result = _write_database(
+        output_db,
+        endpoint,
+        normalized_schemes,
+        retrieved_at=retrieved_at,
+        replace=replace,
+    )
+
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "retrieved_at": retrieved_at,
+        "transport": "eurostat-showvoc-sparql",
+        "source_manifest": str(manifest_path),
+        "source_manifest_sha256": manifest_digest,
+        "schemes": [x["scheme"] for x in normalized_schemes],
+        **db_result,
+    }
+
+
 def sync(catalog: Path, output_db: Path, raw_dir: Path, *, replace: bool = False) -> dict[str, Any]:
     obj = json.loads(catalog.read_text(encoding="utf-8"))
     schema_version = obj.get("schema_version")
+    if schema_version == "official-classification-catalog-v0.3":
+        return _sync_showvoc(catalog, output_db, raw_dir, replace=replace)
     if schema_version == "official-classification-catalog-v0.2":
         return _sync_sdmx(catalog, output_db, raw_dir, replace=replace)
     if schema_version == "official-classification-catalog-v0.1":

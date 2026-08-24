@@ -1,0 +1,42 @@
+{
+  "schema_version": "official-classification-catalog-v0.3",
+  "transport": "eurostat-showvoc-sparql",
+  "showvoc_endpoint": "https://showvoc.op.europa.eu/semanticturkey/it.uniroma2.art.semanticturkey/st-core-services/SPARQL/evaluateQuery",
+  "languages": [
+    "en",
+    "fr",
+    "de"
+  ],
+  "schemes": [
+    {
+      "key": "NACE_REV_2_1",
+      "system": "NACE",
+      "version": "2.1",
+      "project": "ESTAT_Statistical_Classification_of_Economic_Activities_in_the_European_Community_Rev._2.1._(NACE_2.1)",
+      "expected_item_count": 1047,
+      "expected_levels": 4,
+      "expected_level_counts": {
+        "1": 22,
+        "2": 87,
+        "3": 287,
+        "4": 651
+      }
+    },
+    {
+      "key": "CPA_2_2",
+      "system": "CPA",
+      "version": "2.2",
+      "project": "ESTAT_Statistical_classification_of_products_by_activity,_2.2_(CPA_2.2)",
+      "expected_item_count": 5824,
+      "expected_levels": 6,
+      "expected_level_counts": {
+        "1": 22,
+        "2": 87,
+        "3": 284,
+        "4": 644,
+        "5": 1433,
+        "6": 3354
+      }
+    }
+  ]
+}
